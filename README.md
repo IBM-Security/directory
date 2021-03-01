@@ -4,3 +4,4 @@ This repository contains IBM Security Directory tools, tuning guides and other h
 
 Please use the Issue tab to report problems, offer suggestions, etc.
 
+## [Useful tools](tools)
