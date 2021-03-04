@@ -13,17 +13,17 @@ Running the python versions will require having the [python-ibmdb package](https
 Compiling the go versions will require having the [go_ibm_db](https://github.com/ibmdb/go_ibm_db) installed.  
 The go binaries in bin/ will run on a Linux system with DB2 installed as they are just linked against libdb2.so.
 
-####repl_data -
+#### repl_data -
 will report on the number of pending changes and the age of the oldest pending change for each consumer of each replication context, based on reading the producer's database.
 
-####ldap_sdiff -
+#### ldap_sdiff -
 will compare all the entries in two SDS instance databases and report on any differences between them, whether missing entries or differences in modify timestamps for matching DNs.
 
 ---
 
 Both utilities work by connecting to the underlying database and looking at specific tables, so you will need to run them on a system that has DB2 client installed and has the ability to connect to the database instance ports of the SDS servers.
 
-###Notes:
+### Notes:
 * The scripts have been tested using a non-TLS enabled port of DB2, which is default for SDS deployments.
 
 * Using the python scripts requires ibm_db python package to be installed. Like so:
