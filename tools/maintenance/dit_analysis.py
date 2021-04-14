@@ -99,8 +99,7 @@ def dit_analysis(schema, csvFile, outputcsv):
         "               max(le.modify_timestamp) as max_mt, min(le.modify_timestamp) as min_mt,"
         "               max(le.create_timestamp) as max_ct, min(le.create_timestamp) as min_ct"
         "        from {}.ldap_entry le"
-        "        group by le.PEID"
-        "        having count(*) > 0) as t "
+        "        group by le.PEID) as t "
         "where lem.eid = t.PEID "
         "order by lem.eid"
     ).format(schema, schema)

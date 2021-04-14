@@ -18,3 +18,6 @@ the DB2 database underlying SDS - and assumes that the LDAP_ENTRY table is prese
 
 The CSV output includes the max/min modify and create timestamps, the DIT simply
 has the counts with the structure of the tree laid out.
+
+Empty containers will not show up with this script, so if you just created a new OU
+the script will not show it until it contains one object.
