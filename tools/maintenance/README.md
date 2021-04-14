@@ -11,3 +11,10 @@ itself. It has some smarts like assuming that REORG runs in the background and w
 completion before updating the reorg'ed objects with a runstat.
 
 This tool can be used for regular DB2 databases - i.e., not used by SDS.
+
+dit_analysis - this script analyzes the entries in the Directory and creates a summary of
+the data found in both a CSV format as well a visual Directory Information Tree. It runs directly against
+the DB2 database underlying SDS - and assumes that the LDAP_ENTRY table is present.
+
+The CSV output includes the max/min modify and create timestamps, the DIT simply
+has the counts with the structure of the tree laid out.
