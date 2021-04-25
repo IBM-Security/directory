@@ -4,7 +4,8 @@ This repository contains IBM Security Directory tools, tuning guides and other h
 
 Please use the Issue tab to report problems, offer suggestions, etc.
 
-## [Useful tools](tools)
+## [IBM Security Directory Server](server)
+## [IBM Security Directory Suite](suite)
 
 #### Note: Please open an issue in github if you face any issues. The scripts are also open to enhancements - we appreciate pull requests with any changes you make. The tools provided are as-is and will not be supported via tickets.
 
