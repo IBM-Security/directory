@@ -21,3 +21,5 @@ has the counts with the structure of the tree laid out.
 
 Empty containers will not show up with this script, so if you just created a new OU
 the script will not show it until it contains one object.
+
+The go version of dit_analysis is in the [ditAnalysis](ditAnalysis) directory.
