@@ -61,7 +61,7 @@ func (d *ditNode) visualize(prefix, nodePrefix string) {
 		fmt.Printf("%s%s(%d,%d)\n",prefix, d.name_from_dn(), d.childCount, d.descendantCount)
 	}
 	for i, n := range d.nodes {
-		if i < len(d.nodes) {
+		if i+1 < len(d.nodes) {
 			n.visualize(nodePrefix+"├── ", nodePrefix+"│   ")
 		} else {
 			n.visualize(nodePrefix+"└── ", nodePrefix+"    ")
