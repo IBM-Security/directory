@@ -23,6 +23,7 @@ type DatabaseInfo struct {
 type OutputInfo struct {
 	format   string
 	filename string
+	sortColumn string
 }
 
 type ConfigInfo struct {
@@ -44,6 +45,7 @@ func getArguments(programName string) ConfigInfo {
 	loglevelArg := fs.String("loglevel", "CRITICAL", "Logging Level (defaults to CRITICAL).")
 	outputFormatArg := fs.String("output_format", "CSV", "Text output, CSV format or PNG (defaults to CSV).")
 	output_fileArg := fs.String("output_file", "", "Output CSV of DIT statistics (defaults to stdout).")
+        textSortColumnArg := fs.String("textSortColumn", "DN", "column to sort by, default is DN")
 	helpArg := fs.Bool("help", false, "Display the full help text")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
@@ -116,15 +118,15 @@ func getArguments(programName string) ConfigInfo {
 	outputInfo := OutputInfo{
 		format:   *outputFormatArg,
 		filename: *output_fileArg,
+                sortColumn: *textSortColumnArg,
 	}
-
 	var consumerWriter ConsumerWriter
 	switch strings.ToUpper(*outputFormatArg) {
 	case "CSV":
 		consumerWriter = &csvConsumerWriter{filename: *output_fileArg}
 
-	case "Text":
-		consumerWriter = &textConsumerWriter{filename: *output_fileArg}
+	case "TEXT":
+		consumerWriter = &textConsumerWriter{filename: *output_fileArg, sortColumn: *textSortColumnArg}
 
 	case "PNG":
 		consumerWriter = &pngConsumerWriter{filename: *output_fileArg}
@@ -150,6 +152,7 @@ usage: ` + programName + ` [-h] --dbname DBNAME [--hostname HOSTNAME] [--port PO
                        [--loglevel {DEBUG,INFO,ERROR,CRITICAL}]
                        [--output_format {CSV,Text}]
                        [--output_file OUTPUT_FILE]
+                       [--textSortColumn {DN, descendantCount, EID}]
 `))
 	if message != "" {
 		fmt.Println(message)
@@ -165,6 +168,7 @@ usage: ` + programName + ` [-h] --dbname DBNAME [--hostname HOSTNAME] [--port PO
                        [--loglevel {DEBUG,INFO,ERROR,CRITICAL}]
                        [--output_format {CSV, Text}]
                        [--output_file OUTPUT_FILE]
+                       [--textSortColumn {DN, descendantCount, EID}]
 
 Provide DB2 connection details to analyze DIT statistics.
 
@@ -179,9 +183,12 @@ optional arguments:
   --loglevel {DEBUG,INFO,ERROR,CRITICAL}
                        Logging Level (default CRITICAL).
   --outputcsv {true,y,yes,1,on,false,n,no,0,off}
-  --output_format      CSV format or Text output (defaults to CSV).        
+  --output_format {CSV, Text}
+                       CSV format or Text output (defaults to CSV).        
   --output_file OUTPUT_FILE
                         Output file for DIT statistics (Defaults to stdout).
+  --textSortColumn {DN, descendantCount, EID}
+                        column to sort DIT by, default is DN
 `))
 	os.Exit(1)
 }

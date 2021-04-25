@@ -7,6 +7,7 @@ import (
 
 type textConsumerWriter struct {
        filename string
+       sortColumn string
 }
 
 var DIT *ditNode
@@ -24,5 +25,6 @@ func (t *textConsumerWriter) writeRow(dn, count, min_mt, max_mt, min_ct, max_ct,
 
 func (t *textConsumerWriter) writeTrailer() {
         DIT.calculateCounts() 
+        DIT.sortNodes(t.sortColumn)
         DIT.visualize("","")
 }
