@@ -5,6 +5,7 @@
 ### Useful tools
 
 #### repl_data
+##### usage
 
 ```
 usage: repl_data [-h] --dbname DBNAME [--hostname HOSTNAME] [--port PORT]
@@ -31,6 +32,7 @@ optional arguments:
                         Output CSV of differences (defaults to stdout).
 ```
 
+##### output formats
 repl_data can produce either text or csv formatted output.  The columns in the csv format are described in its header:
 
 ```
@@ -44,3 +46,26 @@ Legend for output:
 Note: Timestamps are provided in UTC timezone.
 
 ```
+
+##### example output
+
+```
+context         consumer        successfulTimestamp     pendingTimestamp        queueSize
+CN=IBMPOLICIES  replica1         9/13/2016 1:41:48       9/23/2016 19:45:44      132
+```
+
+In this example:
+- There are 132 changes pending to replicate
+- The last last successful change replicated from the master to this consumer (replica1) was at 9/13/2016 1:41:48
+- The time stamp of the first pending change is 9/23/2016 19:45:44
+
+
+```
+context         consumer        successfulTimestamp     pendingTimestamp        queueSize
+CN=IBMPOLICIES  replica2        10/14/2016 20:15:14             
+```
+
+In this example:
+-  there are no pending changes, so pendingTimestamp and queueSize were not populated
+
+
