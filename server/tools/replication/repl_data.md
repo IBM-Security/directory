@@ -31,3 +31,16 @@ optional arguments:
                         Output CSV of differences (defaults to stdout).
 ```
 
+repl_data can produce either text or csv formatted output.  The columns in the csv format are described in its header:
+
+```
+Legend for output:
+  context - suffix or context present in server (may or may not be replicated).
+  consumer - hostname or ip address of server data is being replicated to.
+  successfulTimestamp - last successful change that was replicated.
+  pendingTimestamp - oldest pending change that needs to be replicated.
+  queueSize - number of objects pending in replication queue.
+
+Note: Timestamps are provided in UTC timezone.
+
+```
