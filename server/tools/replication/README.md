@@ -15,7 +15,7 @@ The go binaries in bin/ will run on a Linux system with DB2 installed as they ar
 
 #### repl_data -
 will report on the number of pending changes and the age of the oldest pending change for each consumer of each replication context, based on reading the producer's database.
-See [repl data README](repl_data) for more details
+See [repl data README](repl_data.md) for more details
 
 #### ldap_sdiff -
 will compare all the entries in two SDS instance databases and report on any differences between them, whether missing entries or differences in modify timestamps for matching DNs.
