@@ -35,7 +35,7 @@ Output (-o) 1 will return agreements for all contexts and output (-o) 2 will ret
 ```
 
 parse_topology can return textual and/or graphical display of replication agreements.
-It will return:
+It will include:
 - Replication contexts
 - Replication credentials
 - Replication groups
@@ -43,7 +43,7 @@ It will return:
 - Replication agreements
 
 All servers will be identified with their corresponding roles:
-Roles: (G)Gateway (M)Master (R)Replica
+- Roles: (G)Gateway (M)Master (R)Replica
 
 ##### example output
 ```
