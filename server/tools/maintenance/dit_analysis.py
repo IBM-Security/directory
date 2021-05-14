@@ -17,6 +17,7 @@ class DIT(object):
         self.peid = peid
         self.count = count
         self.nodes = []
+        self.descendantCount = 0
 
     def add_node(self, dn, eid, peid, count):
         # Assume that Parent will be added first and be present always
@@ -33,9 +34,9 @@ class DIT(object):
 
     def visualize(self, prefix='', nodePrefix=''):
         if self.dn is None:
-            print("/")
+            print("/ ({} suffixes, {} total entries)".format(len(self.nodes), self.descendantCount))
         else:
-            print("{}{}({})".format(prefix, self.name_from_dn(), self.count))
+            print("{}{}({}, {})".format(prefix, self.name_from_dn(), self.count, self.descendantCount))
         for i, n in enumerate(self.nodes, start=1):
             if i < len(self.nodes):
                 n.visualize(nodePrefix + '├── ', nodePrefix + '│   ')
@@ -47,6 +48,16 @@ class DIT(object):
             return self.dn
         else:
             return self.dn.split(',', 1)[0]
+
+    def calculateCounts(self):
+        if self.count is None:
+            self.descendantCount = len(self.nodes) # beginning of tree
+        else:
+            self.descendantCount = self.count
+        for n in self.nodes:
+            self.descendantCount += n.calculateCounts()
+
+        return self.descendantCount
 
 
 def print_legend(csvFile, outputcsv):
@@ -62,7 +73,7 @@ def print_legend(csvFile, outputcsv):
         print("  min_ct - lowest creation timestamp of objects in that node.")
         print("  max_ct - highest creation timestamp of objects in that node.")
         print("")
-        print("Note: Timestamps are provided in UTC timezone.")
+        print("Note: Timestamps are provided in UTC timezone. Uncommitted data will be analyzed.")
         print("")
         writer = csv.DictWriter(csvFile, ['dn', 'count', 'min_mt', 'max_mt', 'min_ct', 'max_ct'])
         writer.writeheader()
@@ -73,7 +84,7 @@ def print_legend(csvFile, outputcsv):
         return None
 
 
-def writecsv_or_createdit(csvWriter, result, outputcsv, dit):
+def processcsv_createdit(csvWriter, result, outputcsv, dit):
     if outputcsv:
         csvWriter.writerow({
             'dn': result[0],
@@ -83,36 +94,36 @@ def writecsv_or_createdit(csvWriter, result, outputcsv, dit):
             'min_ct': result[4],
             'max_ct': result[5]
         })
+    if dit.add_node(dn=result[0], eid=result[6], peid=result[7], count=result[1]):
+        logger.debug("Added DN: to DIT".format(result[0]))
     else:
-        if dit.add_node(dn=result[0], eid=result[6], peid=result[7], count=result[1]):
-            logger.debug("Added DN: to DIT".format(result[0]))
-        else:
-            logger.error("Unable to find parent for DN: {} EID: {}".format(result[0], result[6]))
+        logger.error("Unable to find parent for DN: {} EID: {}".format(result[0], result[6]))
 
 
 def dit_analysis(schema, csvFile, outputcsv):
     writer = print_legend(csvFile, outputcsv)
     sql = (
-        "select lem.dn, t.count, t.min_mt, t.max_mt, t.min_ct, t.max_ct, lem.eid, lem.peid"
+        "select lem.dn, t.count, t.min_mt - current timezone, t.max_mt - current timezone,"
+        "        t.min_ct - current timezone, t.max_ct - current timezone, lem.eid, lem.peid"
         "  from {}.ldap_entry as lem,"
         "       (select le.PEID as PEID, count(*) as count,"
         "               max(le.modify_timestamp) as max_mt, min(le.modify_timestamp) as min_mt,"
         "               max(le.create_timestamp) as max_ct, min(le.create_timestamp) as min_ct"
         "        from {}.ldap_entry le"
-        "        group by le.PEID) as t "
+        "        group by le.PEID with UR) as t "
         "where lem.eid = t.PEID "
-        "order by lem.eid"
+        "order by lem.eid with UR"
     ).format(schema, schema)
     logger.debug("Executing SQL: {}".format(sql))
     dit = DIT()
     stmt = ibm_db.exec_immediate(conn, sql)
     result = ibm_db.fetch_tuple(stmt)
     while (result):
-        writecsv_or_createdit(writer, result, outputcsv, dit)
+        processcsv_createdit(writer, result, outputcsv, dit)
         logger.debug("result: {}".format(result))
         result = ibm_db.fetch_tuple(stmt)
-    if not outputcsv:
-        dit.visualize()
+    dit.calculateCounts()
+    dit.visualize()
 
 
 def get_arguments():
@@ -128,8 +139,8 @@ def get_arguments():
     aparser.add_argument('--password', help='Password to connect to DB2.', required=True)
     aparser.add_argument('--loglevel', help='Logging Level (defaults to CRITICAL).', required=False, default='CRITICAL',
                          choices=['DEBUG', 'INFO', 'ERROR', 'CRITICAL'], type=str.upper)
-    aparser.add_argument('--outputcsv', help='Visualize DIT or CSV format (defaults to False).', required=False,
-                         default='false', choices=['true', 'y', 'yes', '1', 'on', 'false', 'n', 'no', '0', 'off'],
+    aparser.add_argument('--outputcsv', help='Visualize DIT or CSV format (defaults to True).', required=False,
+                         default='true', choices=['true', 'y', 'yes', '1', 'on', 'false', 'n', 'no', '0', 'off'],
                          type=str.lower)
     aparser.add_argument('--output_file', help='Output CSV of DIT nodes (defaults to stdout).', required=False)
 
