@@ -20,6 +20,11 @@ See [repl data README](repl_data.md) for more details
 #### ldap_sdiff -
 will compare all the entries in two SDS instance databases and report on any differences between them, whether missing entries or differences in modify timestamps for matching DNs.
 
+#### parse_topology
+will parse replication topology from a file or by connecting directly to the LDAP server.
+It will return a summary of the relationships between Suppliers and Consumers for reach replication context in the topology.
+See [parse topology README](parse_topology.md) for more details.
+
 ---
 
 Both utilities work by connecting to the underlying database and looking at specific tables, so you will need to run them on a system that has DB2 client installed and has the ability to connect to the database instance ports of the SDS servers.
