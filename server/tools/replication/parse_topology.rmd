@@ -1,11 +1,13 @@
-IBM Security Performance
+# IBM Security Performance
 
-Identity and Access Management
+## Identity and Access Management
 
-Useful tools
+### Useful tools
 
-parse_repltopology
+#### parse_repltopology
 
+##### usage
+```
 usage: parse_topology.py [-h] [-f F] [-search SEARCH] [-host HOSTNAME] [-p PORT] [-D D] [-w W] [-sc {Z,Y}] [-K K] [-P P] [-o {1,2}]
 
 Parse replication topology from an output file or directly from LDAP Server.
@@ -30,6 +32,7 @@ optional arguments:
                         Textual (1) or Graphical (2) display of Replication Topology (defaults to 1).
 
 Output (-o) 1 will return agreements for all contexts and output (-o) 2 will return agreements one context at a time.
+```
 
 parse_topology can return textual and/or graphical display of replication agreements.
 It will return:
@@ -42,8 +45,8 @@ It will return:
 All servers will be identified with their corresponding roles:
 Roles: (G)Gateway (M)Master (R)Replica
 
-example output
-
+##### example output
+```
 [#]Replication Contexts:
 ------------------------
 [1]cn=ibmpolicies
@@ -84,11 +87,12 @@ Supplier:     ⬐ (G) cn=gateway1s1
 Consumers(3): ⮑ (M) cn=master1s1
               ⮑ (M) cn=master2s1
               ⮑ (R) cn=replica1s1
+```
 
 In this example:
 
-We can see in this topology there are three main suppliers (a (G)Gateway and two (M)masters/peers) bi-directionally replicating to each other and all three Suppliers are also replicating to one (R)replica server.
+- We can see in this topology there are three main suppliers (a (G)Gateway and two (M)masters/peers) bi-directionally replicating to each other and all three Suppliers are also replicating to one (R)replica server.
 
 Pre-requisites:
-pip3 install networkx
-pip3 install matplotlib
+- pip3 install networkx
+- pip3 install matplotlib
