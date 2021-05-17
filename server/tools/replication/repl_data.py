@@ -42,7 +42,7 @@ def decode_and_find_modifytimestamp(base64_message):
 
 def get_latest_update(conn, schema, tablename):
     try:
-        sql = "select max(id) from {}.{}".format(schema, tablename)
+        sql = "select max(id) from {}.{} with UR".format(schema, tablename)
         logger.debug("Executing SQL: {}".format(sql))
         stmt = ibm_db.exec_immediate(conn, sql)
         result = ibm_db.fetch_tuple(stmt)
@@ -68,7 +68,7 @@ def get_changes(conn, schema, tablename, changeid):
             "select dn_trunc, control_long, lastchangeid"
             " from {}.LDAP_ENTRY as l, {}.REPLSTATUS as r, {}.{} as rc"
             " where r.LASTCHANGEID+{}=rc.id"
-            " and l.eid=r.eid"
+            " and l.eid=r.eid with UR"
         ).format(schema, schema, schema, tablename, changeid)
         logger.debug("Executing SQL: {}".format(sql))
         stmt = ibm_db.exec_immediate(conn, sql)
@@ -164,7 +164,7 @@ def report_changes_for_contexts(schema, csvFile, outputcsv):
         "(select peid "
         "from {}.ldap_entry as l, {}.OBJECTCLASS as o "
         "where l.eid=o.eid "
-        "and o.OBJECTCLASS='IBM-REPLICAGROUP')"
+        "and o.OBJECTCLASS='IBM-REPLICAGROUP' with UR) with UR"
     ).format(schema, schema, schema)
     logger.debug("Executing SQL: {}".format(sql))
     stmt = ibm_db.exec_immediate(conn, sql)

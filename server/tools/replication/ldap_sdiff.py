@@ -21,7 +21,7 @@ def list_repl_contexts(conn, schema):
     sql = (
         "select dn, dn_trunc, modify_timestamp - current timezone"  # Return timestamp in UTC format
         " from {}.ldap_entry"
-        " order by dn_trunc"
+        " order by dn_trunc with UR"
     ).format(schema)
     logger.debug("Executing SQL: {}".format(sql))
     return ibm_db.exec_immediate(conn, sql)
