@@ -38,8 +38,8 @@ Both utilities work by connecting to the underlying database and looking at spec
 
 #### manage_topology -
 will parse, test, and delete replication topology from a file(parse only) or by connecting directly to an LDAP server.
-When parsing: it will return a summary of the relationships between Suppliers and Consumers for reach replication context in the topology.
-When testing: a Test entry  will be be created, searched, and deleted on behalf of a Supplier on all its consumers using the replication credentials.
-When deleting: it can delete topology for 'all' contexts or for a specific context.
+* When parsing: it will return a summary of the relationships between Suppliers and Consumers for reach replication context in the topology.
+* When testing: a Test entry  will be be created, searched, and deleted on behalf of a Supplier on all its consumers using the replication credentials.
+* When deleting: it can delete topology for 'all' contexts or for a specific context.
 See [manage topology README](manage_topology.md) for more details.
 
