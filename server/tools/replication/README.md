@@ -19,12 +19,6 @@ See [repl data README](repl_data.md) for more details
 
 #### ldap_sdiff -
 will compare all the entries in two SDS instance databases and report on any differences between them, whether missing entries or differences in modify timestamps for matching DNs.
-
-#### parse_topology
-will parse replication topology from a file or by connecting directly to the LDAP server.
-It will return a summary of the relationships between Suppliers and Consumers for reach replication context in the topology.
-See [parse topology README](parse_topology.md) for more details.
-
 ---
 
 Both utilities work by connecting to the underlying database and looking at specific tables, so you will need to run them on a system that has DB2 client installed and has the ability to connect to the database instance ports of the SDS servers.
@@ -39,3 +33,11 @@ Both utilities work by connecting to the underlying database and looking at spec
 * If there is no existing DB2 Driver detected then `pip install ibm_db` will attempt a [minimal DB2 driver](https://public.dhe.ibm.com/ibmdl/export/pub/software/data/db2/drivers/odbc_cli/linuxx64_odbc_cli.tar.gz) install.
 
 * There are [other DB2 drivers](https://www.ibm.com/support/pages/db2-odbc-cli-driver-download-and-installation-information) that can be installed ahead of the python ibm_db package in case the driver that is installed by it is not desirable or having issues.
+
+#### manage_topology
+will parse, test, and delete replication topology from a file(parse only) or by connecting directly to an LDAP server.
+When parsing: it will return a summary of the relationships between Suppliers and Consumers for reach replication context in the topology.
+When testing: a Test entry  will be be created, searched, and deleted on behalf of a Supplier on all its consumers using the replication credentials.
+When deleting: it can delete topology for 'all' contexts or for a specific context.
+See [manage topology README](manage_topology.md) for more details.
+
