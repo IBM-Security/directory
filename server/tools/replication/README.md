@@ -18,7 +18,9 @@ will report on the number of pending changes and the age of the oldest pending c
 See [repl data README](repl_data.md) for more details
 
 #### ldap_sdiff -
-will compare all the entries in two SDS instance databases and report on any differences between them, whether missing entries or differences in modify timestamps for matching DNs.
+will compare all the entries in two SDS instance database and report on any differences between them, whether missing entries or differences in modify
+timestamps for matching DNs.
+
 ---
 
 Both utilities work by connecting to the underlying database and looking at specific tables, so you will need to run them on a system that has DB2 client installed and has the ability to connect to the database instance ports of the SDS servers.
@@ -34,7 +36,7 @@ Both utilities work by connecting to the underlying database and looking at spec
 
 * There are [other DB2 drivers](https://www.ibm.com/support/pages/db2-odbc-cli-driver-download-and-installation-information) that can be installed ahead of the python ibm_db package in case the driver that is installed by it is not desirable or having issues.
 
-#### manage_topology
+#### manage_topology -
 will parse, test, and delete replication topology from a file(parse only) or by connecting directly to an LDAP server.
 When parsing: it will return a summary of the relationships between Suppliers and Consumers for reach replication context in the topology.
 When testing: a Test entry  will be be created, searched, and deleted on behalf of a Supplier on all its consumers using the replication credentials.
