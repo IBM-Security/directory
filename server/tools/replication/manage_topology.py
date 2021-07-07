@@ -21,6 +21,8 @@ allreplica_urls = dict()
 allconsumer_ids = dict()
 allsubentry_details = dict()
 allserver_roles = dict()
+allconsumer_creds = dict()
+G = nx.DiGraph()
 
 def check_wrapped_lines(cleanstanza):
     goodObj = dict()
@@ -47,41 +49,84 @@ def get_object_dn(myobject):
                     objectdn.append(value.strip())
     return objectdn
 
-def get_topology_details():
-    print("[#]Replication Contexts: \n------------------------")
+def get_topology_details(scontext):
+    s_context = scontext.lower().strip()
     if len(allcontexts) == 0:
         print("No Replication Contexts found!")
     else:
-        for num, context in enumerate(allcontexts, start=1):
-            if len(allcontexts[context]) > 1:
-                print("[{0}] {1} (referral)->{2}".format(num, context, allcontexts[context][1]))
+        if s_context == 'all':
+            print("[#]Replication Contexts: \n------------------------")
+            for num, context in enumerate(allcontexts, start=1):
+                if len(allcontexts[context]) > 1:
+                    print("[{0}] {1} (referral)->{2}".format(num, context, allcontexts[context][1]))
+                else:
+                    print("[{0}] {1}".format(num, context))
+        else:
+            print("[#]Replication Contexts: \n------------------------")
+            if s_context in allcontexts:
+                if len(allcontexts[s_context]) > 1:
+                    print("[1] {0} (referral)->{1}".format(s_context, allcontexts[s_context][1]))
+                else:
+                    print("[1] {0}".format(s_context))
             else:
-                print("[{0}] {1}".format(num, context))
+                print("Couldn't find Replication context: {0}.".format(scontext))
 
     time.sleep(1)
     print("\n[#]Replication Credentials: \n----------------DN-----------------USER_ID-------PASSWORD")
     if len(allcontext_creds) ==0:
         print("No Replication Credentials found!")
     else:
-        for num, creds in enumerate(allcontext_creds, start=1):
-            print("[{0}] {1} {2} {3}".format(num, creds, allcontext_creds[creds][0][0], allcontext_creds[creds][0][1]))
+        if s_context == 'all':
+            for num, creds in enumerate(allcontext_creds, start=1):
+                print("[{0}] {1} {2} {3}".format(num, creds, allcontext_creds[creds][0][0], allcontext_creds[creds][0][1]))
+        else:
+             cred = [cred for cred in allcontext_creds if s_context in cred]
+             if len(cred) > 0:
+                 for num, cred_dn in enumerate(cred, start=1):
+                    print("[{0}] {1} {2} {3}".format(num,cred_dn, allcontext_creds[cred_dn][0][0],allcontext_creds[cred_dn][0][1]))
+             else:
+                 print("*Couldn't find Replication credentials under: {0}, but below are credentials used in this Topology:".format(scontext))
+                 for num, creds in enumerate(allcontext_creds, start=1):
+                     print("[{0}] {1} {2} {3}".format(num, creds, allcontext_creds[creds][0][0],allcontext_creds[creds][0][1]))
+
 
     time.sleep(1)
     print("\n[#]Replication Groups: \n----------------------")
     if len(allrepl_groups) == 0:
         print("No Replication Groups found!")
     else:
-        for num, group in enumerate(allrepl_groups, start=1):
-            print("[{0}] {1}".format(num, allrepl_groups[group][0]))
+        if s_context == 'all':
+            for num, group in enumerate(allrepl_groups, start=1):
+                print("[{0}] {1}".format(num, allrepl_groups[group][0]))
+        else:
+            if s_context in allrepl_groups:
+                print("[1] {0}".format(allrepl_groups[s_context][0]))
+            else:
+                print("Couldn't find Replication groups for: {0}".format(scontext))
+
 
     time.sleep(1)
     print("\n[#]Replication Subentries: \n--------------------------")
     if len(allsubentry_details) == 0:
         print("No Replication Subentries found!\n")
     else:
-        for con in allsubentry_details:
-            print("[#] [*** Subentries for Context {0} ***---------SERVER_ID-----SERVER_ROLE]".format(con))
-            for num, subentry in enumerate(allsubentry_details[con], start=1):
+        if s_context == 'all':
+            for con in allsubentry_details:
+                print("[#] [*** Subentries for Context {0} ***---------SERVER_ID-----SERVER_ROLE]".format(con))
+                for num, subentry in enumerate(allsubentry_details[con], start=1):
+                        server = subentry['dn'].split(",", 1)[0]
+                        if allserver_roles[server.strip()] == 'G':
+                            role = "Gateway"
+                        elif allserver_roles[server.strip()] == 'M':
+                            role = "Master"
+                        else:
+                            role = "Replica"
+                        print("[{0}]{1}  {2}  {3}".format(num, subentry['dn'].strip('\n'), subentry['ibm-replicaserverid'].strip('\n'), role.strip('\n')))
+                print("\n")
+        else:
+            if s_context in allrepl_subentries:
+                print("[#] [*** Subentries for Context {0} ***---------SERVER_ID-----SERVER_ROLE]".format(s_context))
+                for num, subentry in enumerate(allsubentry_details[s_context], start=1):
                     server = subentry['dn'].split(",", 1)[0]
                     if allserver_roles[server.strip()] == 'G':
                         role = "Gateway"
@@ -89,8 +134,11 @@ def get_topology_details():
                         role = "Master"
                     else:
                         role = "Replica"
-                    print("[{0}]{1}  {2}  {3}".format(num, subentry['dn'].strip('\n'), subentry['ibm-replicaserverid'].strip('\n'), role.strip('\n')))
-            print("\n")
+                    print("[{0}]{1}  {2}  {3}".format(num, subentry['dn'].strip('\n'),subentry['ibm-replicaserverid'].strip('\n'), role.strip('\n')))
+                print("\n")
+            else:
+                print("Couldn't find Replication subentries for: {0}\n".format(scontext))
+
 
 def parse_replication_contexts(lContext):
     for context in lContext:
@@ -216,14 +264,170 @@ def process_agreements(listAgreements):
                 newDictAgreements[key] = value
     return newDictAgreements
 
+def display_graph(G, context):
+
+    if G.number_of_nodes() > 10:
+        rwith = 1
+        nsize = 500
+        fsize = 10
+        font_size = 'small'
+        fig_width = 17
+        fig_height = 10
+    else:
+        rwith = 2
+        nsize = 1000
+        fsize = 12
+        font_size = 'medium'
+        fig_width = 10
+        fig_height = 8
+
+    color_map = nx.get_node_attributes(G, 'role')
+
+    for key in color_map:
+        if color_map[key] == "M":
+            color_map[key] = "green"
+        if color_map[key] == "R":
+            color_map[key] = "red"
+        if color_map[key] == "G":
+            color_map[key] = "blue"
+        if color_map[key] == "U":
+            color_map[key] = "grey"
+
+    edge_colors = []
+    for key in G.edges():
+        if key[0] in color_map:
+            edge_colors.append(color_map[key[1]])
+
+    node_colors = [color_map.get(node) for node in G.nodes()]
+    options = {
+        "horizontalalignment": 'center',
+        "font_size": fsize,
+        "font_color": "black",
+        "node_size": nsize,
+        "node_color": node_colors,
+        "linewidths": 3,
+        "width": rwith,
+        "arrowsize": 20,
+        "arrowstyle": '<->',
+        "arrowcolor": "skyblue",
+        "with_labels": 1,
+        "edge_color": edge_colors
+    }
+
+    mapping = dict(zip(G, range(1, G.number_of_nodes() + 1)))
+    G = nx.relabel_nodes(G, mapping)
+
+    node_d = {}
+    for v in mapping.values():
+        node_d[v] = [n for n in G.neighbors(v)]
+
+    server_agreements = ["{0}-{1} -> {2}".format(v, k, tuple(node_d[v])) for k, v in mapping.items() if
+                         len(node_d[v]) > 0]
+    servers = ["{0}-{1}".format(v, k) for k, v in mapping.items()]
+
+    all_agreements = '\n'.join(server_agreements)
+    all_servers = '\n'.join(servers)
+    final_server_agreements = "**Servers**\n{0}\n\n**Agreements**\nSupplier     ->   (Consumers)\n{1}\n".format(
+        all_servers, all_agreements)
+    try:
+        plt.figure(num=context, figsize=[fig_width, fig_height])
+        nx.draw_circular(G, **options)
+        agreements = "\n".join(["{0} -> {1}".format(supplier, tuple(consumers)) for supplier, consumers in node_d.items() if len(consumers) > 0])
+
+        first_legend = plt.legend(handles=[], title="Agreements\nSupplier -> (Consumers)\n" + agreements,
+                                  loc="upper right", fontsize=font_size, title_fontsize=font_size)
+        plt.gca().add_artist(first_legend)
+        frame1 = first_legend.get_frame()
+        frame1.set_edgecolor('yellow')
+
+        replservers = ["{0}-{1}".format(v, k) for k, v in mapping.items()]
+        servers_title = '\n'.join(replservers)
+        second_legend = plt.legend(handles=[], title="Servers:\n" + servers_title, loc="upper left", fontsize=font_size,
+                                   title_fontsize=font_size)
+        plt.gca().add_artist(second_legend)
+        frame2 = second_legend.get_frame()
+        frame2.set_edgecolor('yellow')
+
+        roles_title = "Roles:\n(M)Master - Green, (R)Replica - Red, (G)Gateway - Blue\n(U)Undefined - Missing subentry - Grey"
+        third_legend = plt.legend(handles=[], title=roles_title, loc="lower left", fontsize=font_size,
+                                  title_fontsize=font_size)
+        plt.gca().add_artist(third_legend)
+        frame3 = third_legend.get_frame()
+        frame3.set_edgecolor('yellow')
+
+        print("Summmary of Servers and Agreements for: {0}\n\
+----------------------------------------------------------------------------\n{1}".format(context,final_server_agreements))
+        print("**Saving image '{0}.png' in current working directory:\n{1}.\n\
+----------------------------------------------------------------------------".format(context, os.getcwd()))
+        plt.savefig(context + ".png", format="PNG", dpi='figure', orientation='landscape')
+        plt.show()
+    except:
+        print(
+            "❌ Can't display graph! You might be running this in a non-GUI environment.\n\
+----------------------------------------------------------------------------")
+        print("Summmary of Servers and Agreements for: {0}\n\
+----------------------------------------------------------------------------\n{1}\
+----------------------------------------------------------------------------".format(context,final_server_agreements))
+    G.clear()
+
+def display_agreements(context, supplier_consumers):
+    print("[#][Context {0}]".format(context))
+    print("----------------------------------------------------------------------------")
+    for supplier, consumers in supplier_consumers.items():
+        if supplier in allserver_roles:
+            roleS = allserver_roles[supplier.strip()]
+        else:
+            roleS = "U"
+
+        if (len(consumers) == 1):
+            print("Supplier:     ⬐ ({0}){1}".format(roleS, supplier))
+        else:
+            print("Supplier:      ⬐ ({0}){1}".format(roleS, supplier))
+        for num, con in enumerate(consumers, start=1):
+            if con in allserver_roles:
+                roleC = allserver_roles[con.strip()]
+            else:
+                roleC = "U"
+
+            if (args.details == 'y' or args.details == 'yes'):
+                server_details = "->({0}, {1}, {2})".format(allreplica_urls[con], allconsumer_ids[con], allconsumer_creds[con])
+            else:
+                server_details = ""
+
+            if (args.output and args.output == '2'):
+                supp = "(" + roleS + ")" + supplier.split('=')[1]
+                cons = "(" + roleC + ")" + con.split('=')[1]
+                G.add_node(supp, role=roleS)
+                G.add_node(cons, role=roleC)
+                G.add_edge(supp, cons)
+
+            if (len(consumers) == 1):
+                print("Consumer({2}):  ⮑ ({0}){1} {3}\n".format(roleC, con, len(consumers), server_details))
+            else:
+                if num < len(consumers):
+                    if len(consumers) > 9:
+                        if num == 1:
+                            print("Consumers({2}): ⮑ ({0}){1} {3}".format(roleC, con, len(consumers),
+                                                                          server_details))
+                        else:
+                            print("               ⮑ ({0}){1} {2}".format(roleC, con, server_details))
+                    else:
+
+                        if num == 1:
+                            print("Consumers({2}):  ⮑ ({0}){1} {3}".format(roleC, con, len(consumers),
+                                                                           server_details))
+                        else:
+                            print("               ⮑ ({0}){1} {2}".format(roleC, con, server_details))
+                else:
+                    print("               ⮑ ({0}){1} {2}\n".format(roleC, con, server_details))
+    print("----------------------------------------------------------------------------")
 
 def visualize_repltopology(ConsumersPerSupplier):
     args = get_arguments()
-    G = nx.DiGraph()
+    s_context=args.s.lower().strip()
 
     if args.op == "search":
-
-        get_topology_details()
+        get_topology_details(args.s)
 
         print("[#]Replication Agreements: \n----------------------------------------------------------------------------\
              \nRoles: (G)Gateway, (M)Master, (R)Replica, or (U)Undefined - missing subentry.\
@@ -231,147 +435,22 @@ def visualize_repltopology(ConsumersPerSupplier):
         if len(ConsumersPerSupplier) == 0:
             print("No Replication agreements found!")
         else:
-            for context, consumerlist in ConsumersPerSupplier.items():
-                print("[#][Context: {0}]".format(context))
-                print("----------------------------------------------------------------------------")
-                time.sleep(2)
-                for supplier, consumers in consumerlist.items():
-                    if supplier in allserver_roles:
-                        roleS = allserver_roles[supplier.strip()]
-                    else:
-                        roleS = "U"
+            if s_context == 'all':
+               for context, consumerlist in ConsumersPerSupplier.items():
+                   display_agreements(context, consumerlist)
 
-                    if (len(consumers) == 1):
-                        print("Supplier:     ⬐ ({0}){1}".format(roleS, supplier))
-                    else:
-                        print("Supplier:      ⬐ ({0}){1}".format(roleS, supplier))
-                    for num, con in enumerate(consumers, start=1):
-                        if con in allserver_roles:
-                            roleC = allserver_roles[con.strip()]
-                        else:
-                            roleC = "U"
+                   if (args.output == '2'):
+                       display_graph(G, context)
+            else:
+                context_supplier_consumers = [(con, consumerlist) for con, consumerlist in ConsumersPerSupplier.items() if s_context in con.lower()]
 
-                        if (args.details == 'y' or args.details == 'yes'):
-                            server_details = "->({0}, {1})".format(allreplica_urls[con], allconsumer_ids[con])
-                        else:
-                            server_details = ""
+                if len(context_supplier_consumers) > 0:
+                    display_agreements(context_supplier_consumers[0][0],context_supplier_consumers[0][1])
 
-                        if (args.output and args.output == '2'):
-                            supp= "(" + roleS + ")" + supplier.split('=')[1]
-                            cons= "(" + roleC + ")" + con.split('=')[1]
-                            G.add_node(supp, role = roleS)
-                            G.add_node(cons, role = roleC)
-                            G.add_edge(supp,cons)
-
-                        if (len(consumers) == 1):
-                            print("Consumer({2}):  ⮑ ({0}){1} {3}\n".format(roleC, con, len(consumers),server_details))
-                        else:
-                            if num < len(consumers):
-                                if len(consumers) > 9:
-                                    if num == 1:
-                                        print("Consumers({2}): ⮑ ({0}){1} {3}".format(roleC, con, len(consumers),server_details))
-                                    else:
-                                        print("               ⮑ ({0}){1} {2}".format(roleC, con,server_details))
-                                else:
-
-                                    if num == 1:
-                                        print("Consumers({2}):  ⮑ ({0}){1} {3}".format(roleC, con, len(consumers),server_details))
-                                    else:
-                                        print("               ⮑ ({0}){1} {2}".format(roleC, con, server_details))
-                            else:
-                                print("               ⮑ ({0}){1} {2}\n".format(roleC, con, server_details))
-                print("----------------------------------------------------------------------------")
-
-                if (args.output == '2'):
-                    if G.number_of_nodes() > 10:
-                        rwith = 1
-                        nsize = 500
-                        fsize = 10
-                        font_size='small'
-                    else:
-                        rwith = 2
-                        nsize = 1000
-                        fsize = 12
-                        font_size='medium'
-
-                    color_map = nx.get_node_attributes(G,'role')
-
-                    for key in color_map:
-                        if color_map[key] == "M":
-                            color_map[key] = "green"
-                        if color_map[key] == "R":
-                            color_map[key] = "red"
-                        if color_map[key] == "G":
-                            color_map[key] = "blue"
-                        if color_map[key] == "U":
-                            color_map[key] = "grey"
-
-                    edge_colors=[]
-                    for key in G.edges():
-                        if key[0] in color_map:
-                            edge_colors.append(color_map[key[1]])
-
-                    node_colors = [color_map.get(node) for node in G.nodes()]
-                    options = {
-                        "horizontalalignment": 'center',
-                        "font_size": fsize,
-                        "font_color": "black",
-                        "node_size": nsize,
-                        "node_color": node_colors,
-                        "linewidths": 3,
-                        "width": rwith,
-                        "arrowsize": 20,
-                        "arrowstyle": '<->',
-                        "arrowcolor": "skyblue",
-                        "with_labels": 1,
-                        "edge_color": edge_colors
-                    }
-
-                    mapping = dict(zip(G, range(1,G.number_of_nodes()+1)))
-                    G = nx.relabel_nodes(G, mapping)
-
-                    node_d= {}
-                    for v in mapping.values():
-                        node_d[v]=[n for n in G.neighbors(v)]
-
-
-                    server_agreements = ["{0}-{1} -> {2}".format(v, k, tuple(node_d[v])) for k, v in mapping.items() if len(node_d[v])> 0 ]
-                    servers = ["{0}-{1}".format(v, k) for k, v in mapping.items()]
-
-                    all_agreements = '\n'.join(server_agreements)
-                    all_servers = '\n'.join(servers)
-                    final_server_agreements = "****Servers****\n{0}\n\n****Agreements****\nSupplier     ->   (Consumers)\n{1}\n".format(all_servers,all_agreements)
-                    try:
-                        plt.figure(num=context)
-                        nx.draw_circular(G,**options)
-
-                        agreements = "\n".join(["{0} -> {1}".format(supplier, tuple(consumers)) for supplier, consumers in node_d.items() if len(consumers) >0])
-
-                        first_legend = plt.legend(title="Agreements\nSupplier -> (Consumers)\n"+agreements,loc="upper right", fontsize=font_size, title_fontsize=font_size)
-                        plt.gca().add_artist(first_legend)
-                        frame1 = first_legend.get_frame()
-                        frame1.set_edgecolor('yellow')
-
-                        replservers = ["{0}-{1}".format(v, k) for k, v in mapping.items()]
-                        servers_title = '\n'.join(replservers)
-                        second_legend = plt.legend(title="Servers:\n"+servers_title, loc="upper left",fontsize=font_size, title_fontsize=font_size)
-                        plt.gca().add_artist(second_legend)
-                        frame2 = second_legend.get_frame()
-                        frame2.set_edgecolor('yellow')
-
-                        roles_title = "Roles:\n(M)Master - Green, (R)Replica - Red, (G)Gateway - Blue\n(U)Undefined - Missing subentry - Grey"
-                        third_legend=plt.legend(title=roles_title, loc="lower left",fontsize=font_size, title_fontsize=font_size)
-                        plt.gca().add_artist(third_legend)
-                        frame3 = third_legend.get_frame()
-                        frame3.set_edgecolor('yellow')
-                        print("Summmary of Servers and Agreements for: {0}\n----------------------------------------------------------------------------\n{1}\
-----------------------------------------------------------------------------".format(context, final_server_agreements))
-                        plt.show()
-                    except:
-                        print("❌ Can't render graph! You might be running this in a non-GUI environment.\n----------------------------------------------------------------------------")
-                        print("Summmary of Servers and Agreements for: {0}\n----------------------------------------------------------------------------\n{1}\
-----------------------------------------------------------------------------".format(context, final_server_agreements))
-                    G.clear()
+                    if (args.output == '2'):
+                        display_graph(G,context_supplier_consumers[0][0])
+                else:
+                    print("Couldn't find Replication agreements for: {0}".format(args.s))
 
 def execute_command(command):
     return subprocess.Popen(command, shell=True, encoding='utf-8', stderr=subprocess.STDOUT, stdout=subprocess.PIPE).stdout.read()
@@ -613,38 +692,46 @@ def delete_topology(replcontext, replicatechange, args):
             commandc = '{0} -h {1} -p {2} -D {3} -w "{4}" -c -k -i {5}'
 
     if context == "all":
-        for con in allrepl_agreements:
-            purge_object('agreements', con, commando, allrepl_agreements[con], args)
+        confirm=input("Are you sure you want to delete the entire Replication topology?[y/Yes - n/No]: ")
+        if(confirm.lower() == "y" or confirm.lower() =="yes"):
+            for con in allrepl_agreements:
+                purge_object('agreements', con, commando, allrepl_agreements[con], args)
 
-        for con in allrepl_subentries:
-            purge_object('subentries', con, commando, allrepl_subentries[con], args)
+            for con in allrepl_subentries:
+                purge_object('subentries', con, commando, allrepl_subentries[con], args)
 
-        for con in allrepl_groups:
-            purge_object('group', con, commando, allrepl_groups[con], args)
+            for con in allrepl_groups:
+                purge_object('group', con, commando, allrepl_groups[con], args)
 
-        purge_object('credential', 'all', commando, allcontext_creds, args)
+            purge_object('credential', 'all', commando, allcontext_creds, args)
 
-        delete_replcontext(context, commandc, args)
+            delete_replcontext(context, commandc, args)
+        else:
+            sys.exit()
     else:
-        if context in allrepl_agreements:
-            purge_object('agreements', context, commando, allrepl_agreements[context], args)
+        confirm = input("Are you sure you want to delete Replication topology for: {0} ?[y/Yes - n/No]: ".format(context))
+        if (confirm.lower() == "y" or confirm.lower() == "yes"):
+            if context in allrepl_agreements:
+                purge_object('agreements', context, commando, allrepl_agreements[context], args)
 
-        if context in allrepl_subentries:
-            purge_object('subentries', context, commando, allrepl_subentries[context], args)
+            if context in allrepl_subentries:
+                purge_object('subentries', context, commando, allrepl_subentries[context], args)
 
-        if context in allrepl_groups:
-            purge_object('group', context, commando, allrepl_groups[context], args)
+            if context in allrepl_groups:
+                purge_object('group', context, commando, allrepl_groups[context], args)
 
-        for con in allcontext_creds:
-            if context in con:
-                print("\n***Deleting Replication Credential for: {0}***".format(context))
-                if args.K:
-                    delete_result = execute_command(commando.format(args.delete, args.sc, args.K, args.P, args.hostname, args.port, args.D, args.w,con))
-                else:
-                    delete_result = execute_command(commando.format(args.delete, args.hostname, args.port, args.D, args.w, con))
-                print(delete_result.strip('\n'))
+            for con in allcontext_creds:
+                if context in con:
+                    print("\n***Deleting Replication Credential for: {0}***".format(context))
+                    if args.K:
+                        delete_result = execute_command(commando.format(args.delete, args.sc, args.K, args.P, args.hostname, args.port, args.D, args.w,con))
+                    else:
+                        delete_result = execute_command(commando.format(args.delete, args.hostname, args.port, args.D, args.w, con))
+                    print(delete_result.strip('\n'))
 
-        delete_replcontext(context, commandc, args)
+            delete_replcontext(context, commandc, args)
+        else:
+            sys.exit()
 
 def parse_replication_agreements(lContext, lAgreement):
     numAgreementsPerContext = 0
@@ -686,6 +773,7 @@ def parse_replication_agreements(lContext, lAgreement):
 
                     allreplica_urls[consumer.strip()] = consumerurl.lower().strip()
                     allconsumer_ids[consumer.strip()] = consumerid.lower().strip()
+                    allconsumer_creds[consumer.strip()] = bindcreds.lower().strip()
 
         processAllAgreements[context + " (" + str(numAgreementsPerContext) + " agreements)"] = dictSuppliers
         allsupplierconsumer_percontext[context]=allsupplierconsumer
@@ -833,10 +921,10 @@ Examples:
     aparser.add_argument('-K', help='SSL .kdb file to search over SSL port.', required=False)
     aparser.add_argument('-P', help='SSL .kdb password.', required=False)
     aparser.add_argument('-op', help='Operation: search/parse, delete, or test replication topology.', default="search", choices=['search', 'delete', 'test'], required=False)
-    aparser.add_argument('-s', help="Suffix to manage (eg. cn=ibmpolicies). When deleting topology 'all' can be used as a value to delete topology for all suffixes.", required=False)
+    aparser.add_argument('-s', help="Suffix to manage (eg. cn=ibmpolicies). When deleting topology 'all' can be ussed to delete entire Topology (for all suffixes).", default='all', required=False)
     aparser.add_argument('-r', help='Replicate change - (defaults to n/No).', required=False, choices=['n','y'], default='n')
     aparser.add_argument('-o', '--output',help='Textual (1) or Graphical (2) display of Replication Topology (defaults to 1).',required=False, default='1', choices=['1', '2'])
-    aparser.add_argument('-d', '--details',help='Return more details of consumer servers (defaults to no).',required=False, default='n', choices=['n', 'no', 'y', 'yes'])
+    aparser.add_argument('-d', '--details',help='Return more details of consumer servers (hostname, serverid, credential dn) -(defaults to no).',required=False, default='n', choices=['n', 'no', 'y', 'yes'])
     aparser.add_argument('-search', help='idsldapsearch (defaults to '+ids_ldap_home+search+').', default=search, required=False)
     aparser.add_argument('-delete', help='idsldapdelete (defaults to '+ids_ldap_home+delete+').', default=delete, required=False)
     aparser.add_argument('-modify', help='idsldapmodify (defaults to '+ids_ldap_home+modify+').', default=modify, required=False)
