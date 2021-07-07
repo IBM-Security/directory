@@ -31,33 +31,24 @@ optional arguments:
   -f F                  File containing Replication Topology.
   -host HOSTNAME, --hostname HOSTNAME
                         LDAP Hostname.
-  -p PORT, --port PORT  Port# where LDAP instance is listening on (eg. SSL 636
-                        or Non-SSL 389) - (defaults to 389).
+  -p PORT, --port PORT  Port# where LDAP instance is listening on (eg. SSL 636 or Non-SSL 389) - (defaults to 389).
   -D D                  Bind DN of LDAP Instance (defaults to cn=root).
   -w W                  Password of Bind DN.
-  -sc {Z,Y}             secure Protocol (Z for SSL or Y for TLS) - (defaults
-                        to Z).
+  -sc {Z,Y}             secure Protocol (Z for SSL or Y for TLS) - (defaults to Z).
   -K K                  SSL .kdb file to search over SSL port.
   -P P                  SSL .kdb password.
   -op {search,delete,test}
-                        Operation: search/parse, delete, or test replication
-                        topology.
-  -s S                  Suffix to manage (eg. cn=ibmpolicies). When deleting
-                        topology 'all' can be used as a value to delete
-                        topology for all suffixes.
+                        Operation: search/parse, delete, or test replication topology.
+  -s S                  Suffix to manage (eg. cn=ibmpolicies). When deleting topology 'all' can be used 
+                        to delete entire topology (for all suffixes).
   -r {n,y}              Replicate change - (defaults to n/No).
   -o {1,2}, --output {1,2}
-                        Textual (1) or Graphical (2) display of Replication
-                        Topology (defaults to 1).
-  -d {n,no,y,yes}, --details {n,no,y,yes}
-                        Return more details of consumer servers (defaults to
-                        no).
-  -search SEARCH        idsldapsearch (defaults to
-                        /opt/ibm/ldap/V6.4/bin/idsldapsearch).
-  -delete DELETE        idsldapdelete (defaults to
-                        /opt/ibm/ldap/V6.4/bin/idsldapdelete).
-  -modify MODIFY        idsldapmodify (defaults to
-                        /opt/ibm/ldap/V6.4/bin/idsldapmodify).
+                        Textual (1) or Graphical (2) display of Replication Topology (defaults to 1).
+ -d {n,no,y,yes}, --details {n,no,y,yes}
+                        Return more details of consumer servers (hostname, serverid, credential dn) -(defaults to no).
+  -search SEARCH        idsldapsearch (defaults to /opt/ibm/ldap/V6.4/bin/idsldapsearch).
+  -delete DELETE        idsldapdelete (defaults to /opt/ibm/ldap/V6.4/bin/idsldapdelete).
+  -modify MODIFY        idsldapmodify (defaults to /opt/ibm/ldap/V6.4/bin/idsldapmodify).
 
 *Output (-o) 1 will return agreements for all contexts at once and output (-o) 2 one context at a time.   
 
@@ -156,7 +147,7 @@ Consumer(1):  ⮑ (G)cn=sds64gateway
 
 Supplier:      ⬐ (M)cn=sdspeer4
 Consumers(2):  ⮑ (M)cn=sdspeer3 
-               ⮑ (G)cn=sds64gateway 
+               ⮑ (G)cn=sds64gateway
 ----------------------------------------------------------------------------
 ```
 ##### Testing example
@@ -211,6 +202,7 @@ Consumers(2): (YES)cn=sdspeer3
 #### Deleting example
 ```
 python3 manage_topology.py -D cn=root -w ? -host localhost -p 8389 -op delete -s all 
+Are you sure you want to delete the entire Replication topology?[y/Yes - n/No]: Yes
 
 ***Deleting Replication agreements for: o=sample***
 Deleting entry cn=sds64gateway,cn=sdspeer3,ibm-replicagroup=default,o=sample
