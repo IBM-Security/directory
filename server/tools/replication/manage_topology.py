@@ -974,7 +974,8 @@ if __name__ == '__main__':
             tempreplines.append(line)
 
         if (tempreplines[-1] != '\n' and tempreplines[-1] != ""):
-            tempreplines.append('\n')
+            if not re.search("#",line):
+                tempreplines.append('\n')
 
         for r in range(len(tempreplines)):
             entiretopology[r] = tempreplines[r]
