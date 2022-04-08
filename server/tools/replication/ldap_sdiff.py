@@ -146,7 +146,7 @@ def compare_all_entry_modify_timestamps(hostname1, conn1, schema1, hostname2, co
     print("Total Entries in {}: {}".format(hostname2, count2))
 
 
-def get_connection(dbname, hostname, port, userid, password):
+def get_connection(dbname, hostname, port, userid, password, serverCertificate, clientKeystoredb, clientKeystash):
     conn_str = (
         "DATABASE={};"
         "HOSTNAME={};"
@@ -155,6 +155,12 @@ def get_connection(dbname, hostname, port, userid, password):
         "UID={};"
         "PWD={};"
     ).format(dbname, hostname, port, userid, password)
+    if serverCertificate:
+        conn_str = "{}Security=ssl;SSLServerCertificate={};".format(conn_str, serverCertificate)
+    elif clientKeystoredb:
+        conn_str = "{}Security=ssl;SSLClientKeystoredb={};SSLClientKeystash={};".format(conn_str,
+                                                                                        clientKeystoredb,
+                                                                                        clientKeystash)
     logger.debug("DB2 Connection: {}".format(conn_str))
     return ibm_db.pconnect(conn_str, "", "")
 
@@ -179,6 +185,14 @@ def get_arguments():
     aparser.add_argument('--loglevel', help='Logging Level (defaults to CRITICAL).', required=False, default='CRITICAL',
                          choices=['DEBUG', 'INFO', 'ERROR', 'CRITICAL'], type=str.upper)
     aparser.add_argument('--output_file', help='Output CSV of differences (defaults to stdout).', required=False)
+    aparser.add_argument('--serverCertificate1', help='Server Certificate in .arm file.', required=False)
+    aparser.add_argument('--clientKeystoredb1', help='Client Keystore DB as .kdb file.', required=False)
+    aparser.add_argument('--clientKeystash1',
+                         help='Client Keystore Stash as .sth file (required if keystoredb1 provided).', required=False)
+    aparser.add_argument('--serverCertificate2', help='Server Certificate in .arm file.', required=False)
+    aparser.add_argument('--clientKeystoredb2', help='Client Keystore DB as .kdb file.', required=False)
+    aparser.add_argument('--clientKeystash2',
+                         help='Client Keystore Stash as .sth file (required if keystoredb2 provided).', required=False)
 
     try:
         return aparser.parse_args()
@@ -225,7 +239,8 @@ if __name__ == '__main__':
             schema1 = args.schema1
         else:
             schema1 = userid1
-        conn1 = get_connection(args.dbname1, args.hostname1, args.port1, userid1, args.password1)
+        conn1 = get_connection(args.dbname1, args.hostname1, args.port1, userid1, args.password1,
+                               args.serverCertificate1, args.clientKeystoredb1, args.clientKeystash1)
 
         # Get connection details to DB2 database underlying second LDAP server
         if args.dbname2:
@@ -252,7 +267,8 @@ if __name__ == '__main__':
             schema2 = args.schema2
         else:
             schema2 = schema1
-        conn2 = get_connection(dbname2, hostname2, port2, userid2, password2)
+        conn2 = get_connection(dbname2, hostname2, port2, userid2, password2,
+                               args.serverCertificate2, args.clientKeystoredb2, args.clientKeystash2)
 
         if args.output_file:
             fout = open(args.output_file, 'w')
