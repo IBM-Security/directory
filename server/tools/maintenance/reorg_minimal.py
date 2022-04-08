@@ -9,6 +9,11 @@ import time
 logger = logging.getLogger(__name__)
 
 
+def get_version():
+    # Please update every time a change is made, semantic conventions to be used
+    return '1.0.0'
+
+
 def identify_indexes(scope, criteria):
     # Execute reorgchk procedure to find indexes needing reorg
     sql = ("Call SYSPROC.REORGCHK_IX_STATS('{}', '{}');").format(scope, criteria)
@@ -160,6 +165,10 @@ def get_arguments():
     aparser.add_argument('--output_file',
                          help='Output file with commands to execute or executed details (defaults to stdout).',
                          required=False)
+    aparser.add_argument('--serverCertificate', help='Server Certificate in .arm file.', required=False)
+    aparser.add_argument('--clientKeystoredb', help='Client Keystore DB as .kdb file.', required=False)
+    aparser.add_argument('--clientKeystash',
+                         help='Client Keystore Stash as .sth file (required if keystoredb provided).', required=False)
 
     try:
         return aparser.parse_args()
@@ -211,6 +220,12 @@ if __name__ == '__main__':
             "UID={};"
             "PWD={};"
         ).format(args.dbname, args.hostname, args.port, userid, args.password)
+        if args.serverCertificate:
+            conn_str = "{}Security=ssl;SSLServerCertificate={};".format(conn_str, args.serverCertificate)
+        elif args.clientKeystoredb:
+            conn_str = "{}Security=ssl;SSLClientKeystoredb={};SSLClientKeystash={};".format(conn_str,
+                                                                                            args.clientKeystoredb,
+                                                                                            args.clientKeystash)
         logger.debug("DB2 Connection: {}".format(conn_str))
         conn = ibm_db.pconnect(conn_str, "", "")
         if args.output_file:
@@ -218,7 +233,7 @@ if __name__ == '__main__':
         else:
             fout = sys.stdout
 
-        print('--Executing Minimal Reorg--', file=fout)
+        print('--Executing Minimal Reorg v{}--'.format(get_version()), file=fout)
         print('---------------------------', file=fout)
         print('--***Assuming STATS are Current***', file=fout)
         if args.IX_TB == 'B' or args.IX_TB == 'I':
@@ -251,7 +266,7 @@ if __name__ == '__main__':
 
         endtime = datetime.utcnow()
         logger.info("End of Script: {}".format(endtime))
-        print("--Script ran for: {}".format(endtime - starttime), file=fout)
+        print("--Script v{} ran for: {}".format(endtime - starttime, get_version()), file=fout)
     except Exception as e:
         conn_error = ibm_db.conn_error()
         stmt_error = ibm_db.stmt_error()
