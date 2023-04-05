@@ -22,7 +22,7 @@ func listAllEntries(DBconn *sql.DB, schema string, out chan<- ldapEntry) {
 	defer close(out)
 	listAllEntries := []string{
 		"select dn_trunc, modify_timestamp ",
-		"from %s.ldap_entry order by dn_trunc "}
+		"from %s.ldap_entry order by dn_trunc with UR"}
 	listAllEntriesSQLTemplate := strings.Join(listAllEntries, "")
 	listAllEntriesSQL := fmt.Sprintf(listAllEntriesSQLTemplate, schema)
 	statement, err := DBconn.Prepare(listAllEntriesSQL)
