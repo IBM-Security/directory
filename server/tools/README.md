@@ -9,6 +9,11 @@ Use repl_data to get information on your replication queues - it includes queue 
 replicated. The ldap_sdiff tool is a fast and efficient way to compare the contents between two directories.
 
 
+### [Miscellaneous tools](miscellaneous)
+The lidf2csv python script is very handy to convert a LDIF file into a CSV format for 
+quick processing.
+
+
 ### [Maintenance tools](maintenance)
 The reorg_minimal script uses reorgchk to determine which tables and indexes need reorg - so
 there is no need to do a brute force reorg of all objects in the database. dit_analysis provides 

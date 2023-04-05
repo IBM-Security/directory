@@ -51,7 +51,7 @@ class DIT(object):
 
     def calculateCounts(self):
         if self.count is None:
-            self.descendantCount = len(self.nodes) # beginning of tree
+            self.descendantCount = len(self.nodes)  # beginning of tree
         else:
             self.descendantCount = self.count
         for n in self.nodes:
@@ -143,6 +143,10 @@ def get_arguments():
                          default='true', choices=['true', 'y', 'yes', '1', 'on', 'false', 'n', 'no', '0', 'off'],
                          type=str.lower)
     aparser.add_argument('--output_file', help='Output CSV of DIT nodes (defaults to stdout).', required=False)
+    aparser.add_argument('--serverCertificate', help='Server Certificate in .arm file.', required=False)
+    aparser.add_argument('--clientKeystoredb', help='Client Keystore DB as .kdb file.', required=False)
+    aparser.add_argument('--clientKeystash',
+                         help='Client Keystore Stash as .sth file (required if keystoredb provided).', required=False)
 
     try:
         return aparser.parse_args()
@@ -198,6 +202,12 @@ if __name__ == '__main__':
             "UID={};"
             "PWD={};"
         ).format(args.dbname, args.hostname, args.port, userid, args.password)
+        if args.serverCertificate:
+            conn_str = "{}Security=ssl;SSLServerCertificate={};".format(conn_str, args.serverCertificate)
+        elif args.clientKeystoredb:
+            conn_str = "{}Security=ssl;SSLClientKeystoredb={};SSLClientKeystash={};".format(conn_str,
+                                                                                            args.clientKeystoredb,
+                                                                                            args.clientKeystash)
         logger.debug("DB2 Connection: {}".format(conn_str))
         conn = ibm_db.pconnect(conn_str, "", "")
         if args.output_file:
