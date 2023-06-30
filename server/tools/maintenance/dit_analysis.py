@@ -112,7 +112,7 @@ def dit_analysis(schema, csvFile, outputcsv):
         "        from {}.ldap_entry le"
         "        group by le.PEID with UR) as t "
         "where lem.eid = t.PEID "
-        "order by lem.eid with UR"
+        "order by lem.peid, lem.eid with UR"
     ).format(schema, schema)
     logger.debug("Executing SQL: {}".format(sql))
     dit = DIT()
