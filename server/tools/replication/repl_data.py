@@ -12,6 +12,11 @@ import distutils.util
 logger = logging.getLogger(__name__)
 
 
+def get_version():
+    # Please update every time a change is made, semantic conventions to be used
+    return '0.0.9'
+
+
 def find_modifytimestamp(input_stream):
     """Look for modifyTimestamp"""
     while not input_stream.eof():
@@ -65,7 +70,7 @@ def get_changes(conn, schema, tablename, changeid):
     try:
         ret_data = []
         sql = (
-            "select dn_trunc, control_long, lastchangeid"
+            "select l.dn, control_long, lastchangeid"
             " from {}.LDAP_ENTRY as l, {}.REPLSTATUS as r, {}.{} as rc"
             " where r.LASTCHANGEID+{}=rc.id"
             " and l.eid=r.eid with UR"
@@ -158,13 +163,9 @@ def report_changes_for_contexts(schema, csvFile, outputcsv):
     writer = print_legend(csvFile, outputcsv)
     # Execute query to find all suffixes being replicated
     sql = (
-        "select eid, dn_trunc "
-        "from {}.ldap_entry "
-        "where eid in "
-        "(select peid "
-        "from {}.ldap_entry as l, {}.OBJECTCLASS as o "
-        "where l.eid=o.eid "
-        "and o.OBJECTCLASS='IBM-REPLICAGROUP' with UR) with UR"
+        "select le.eid, le.dn "
+        "from {}.ldap_entry as le, {}.replicaConsumerId as rci "
+        "where le.eid = rci.eid with UR"
     ).format(schema, schema, schema)
     logger.debug("Executing SQL: {}".format(sql))
     stmt = ibm_db.exec_immediate(conn, sql)
@@ -195,7 +196,7 @@ def get_arguments():
     aparser.add_argument('--port', help='Port# DB2 is listening on (defaults to 50000).', default=50000)
     aparser.add_argument('--schema', help='DB2 Table name schema (defaults to userid).', required=False)
     aparser.add_argument('--userid', help='Userid to connect to DB2 (defaults to dbname).', required=False)
-    aparser.add_argument('--password', help='Password to connect to DB2.', required=True)
+    aparser.add_argument('--password', help='Password to connect to DB2.', required=False)
     aparser.add_argument('--loglevel', help='Logging Level (defaults to CRITICAL).', required=False, default='CRITICAL',
                          choices=['DEBUG', 'INFO', 'ERROR', 'CRITICAL'], type=str.upper)
     aparser.add_argument('--outputcsv', help='Test output or CSV format (defaults to False).', required=False,
@@ -206,6 +207,11 @@ def get_arguments():
     aparser.add_argument('--clientKeystoredb', help='Client Keystore DB as .kdb file.', required=False)
     aparser.add_argument('--clientKeystash',
                          help='Client Keystore Stash as .sth file (required if keystoredb provided).', required=False)
+    aparser.add_argument('--dblocal',
+                         help='Indicate if database is local, skip id details to use current user (defaults to True).',
+                         required=False,
+                         default='true', choices=['true', 'y', 'yes', '1', 'on', 'false', 'n', 'no', '0', 'off'],
+                         type=str.lower)
 
     try:
         return aparser.parse_args()
@@ -242,7 +248,7 @@ if __name__ == '__main__':
             }
         }
         logging.config.dictConfig(DEFAULT_LOGGING)
-        logger.info("Start of Script: {}".format(starttime))
+        logger.info("Start of Script v{}: {}".format(get_version(), starttime))
 
         # Get connection details to DB2 database underlying the LDAP server
         if args.userid:
@@ -253,20 +259,26 @@ if __name__ == '__main__':
             schema = args.schema
         else:
             schema = userid
-        conn_str = (
-            "DATABASE={};"
-            "HOSTNAME={};"
-            "PORT={};"
-            "PROTOCOL=TCPIP;"
-            "UID={};"
-            "PWD={};"
-        ).format(args.dbname, args.hostname, args.port, userid, args.password)
-        if args.serverCertificate:
-            conn_str = "{}Security=ssl;SSLServerCertificate={};".format(conn_str, args.serverCertificate)
-        elif args.clientKeystoredb:
-            conn_str = "{}Security=ssl;SSLClientKeystoredb={};SSLClientKeystash={};".format(conn_str,
-                                                                                            args.clientKeystoredb,
-                                                                                            args.clientKeystash)
+        if args.dblocal:
+            if args.password:
+                conn_str = ("dsn={};uid={};pwd={}").format(args.dbname, userid, args.password)
+            else:
+                conn_str = ("dsn={}").format(args.dbname)
+        else:
+            conn_str = (
+                "DATABASE={};"
+                "HOSTNAME={};"
+                "PORT={};"
+                "PROTOCOL=TCPIP;"
+                "UID={};"
+                "PWD={};"
+            ).format(args.dbname, args.hostname, args.port, userid, args.password)
+            if args.serverCertificate:
+                conn_str = "{}Security=ssl;SSLServerCertificate={};".format(conn_str, args.serverCertificate)
+            elif args.clientKeystoredb:
+                conn_str = "{}Security=ssl;SSLClientKeystoredb={};SSLClientKeystash={};".format(conn_str,
+                                                                                                args.clientKeystoredb,
+                                                                                                args.clientKeystash)
         logger.debug("DB2 Connection: {}".format(conn_str))
         conn = ibm_db.pconnect(conn_str, "", "")
         if args.output_file:
@@ -276,8 +288,8 @@ if __name__ == '__main__':
         outputcsv = bool(distutils.util.strtobool(args.outputcsv))
         report_changes_for_contexts(schema, fout, outputcsv)
         endtime = datetime.utcnow()
-        logger.info("End of Script: {}".format(endtime))
-        print("Script ran for: {}".format(endtime - starttime))
+        logger.info("End of Script v{}: {}".format(get_version(), endtime))
+        print("Script v{} ran for: {}".format(get_version(), endtime - starttime))
     except Exception as e:
         conn_error = ibm_db.conn_error()
         stmt_error = ibm_db.stmt_error()
