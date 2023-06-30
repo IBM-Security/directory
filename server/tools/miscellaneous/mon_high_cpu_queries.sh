@@ -3,19 +3,23 @@
 # ==============================================================================
 # Purpose:           Monitor for high CPU, in which case dump mon_current_sql
 # Author:            Ram Sreerangam
-# Notes:             The dumped out data is in CSV format. It is expected that 
-#                    this data be consumed by NewRelic or Instana.
-#                    select * has been used - it is upto user to figure out column
-#                    sequence in output CSV and also differences between DB2 versions
+# Notes:          -> The dumped out data is in CSV format. It is expected that
+#                    this data be consumed by a dashboard somewhere.
+#                 -> "select *" has been used - it is upto user to figure out column
+#                    sequence in output CSV and also differences between DB2 versions.
+#                 -> Default location for output files is /tmp - edit script to change.
 # Parameters:        1. REQUIRED: Pass a valid DB Alias to connect to, it is
 #                                 assumed instance owner will run this script.
 #                                 Connect will be attempted with no id/password!
 #                    2. OPTIONAL: Pass a percentage value to use for CPU threshold
 #                                 (defaults to 50%)
+# Crontab:           Run as database instance owner to avoid id/pwd needs, or as root:
+# */5 * * * * /bin/su - idsldap -c "/home/idsldap/scripts/mon_high_cpu_queries.sh idsldap 50" >> /tmp/mhcq.log 2>&1
 # Revision:          2023-03-28: Initial version
 #                    2023-03-30: Converted to using top from /proc/loadavg
 #                    2023-03-30: Added logic to stop when HADR STANDBY is detected
 #                                (may need to be reconsidered if STANDBYs are READONLY)
+#                    2023-06-29: Tweak for publishing to github
 # ==============================================================================
 #
 SECONDS=0
@@ -56,7 +60,7 @@ fi
 # This extracts loadavg which is not CPU% - there might be another proc to get CPU...
 #CUR_CPU_FLOAT=`/usr/bin/cat /proc/loadavg | awk '{print $1}'`
 # Extract the current idle CPU usage level in the server
-IDLE_CPU_FLOAT=$(top -bn1 | awk '/Cpu/ { print $8 }') 
+IDLE_CPU_FLOAT=$(top -bn1 | awk '/Cpu/ { print $8 }')
 # Converting to rounded integer - and convert idle CPU%
 CUR_CPU=`echo "(100-$IDLE_CPU_FLOAT+0.5)/1" | bc`
 
