@@ -6,6 +6,48 @@
 
 ---
 
+## Getting the Script into the Container
+
+To use `idspgmaint.sh` inside an ISVD container, copy it to the container-mounted persistent volume by following these steps.
+
+### 1. Create the scripts directory
+
+**Docker**
+```bash
+docker exec -u 1000 <isvd-container-name> mkdir /var/isvd/data/scripts
+```
+
+**Kubernetes**
+```bash
+kubectl exec <isvd-pod-name> -- mkdir /var/isvd/data/scripts
+```
+
+### 2. Adjust the directory permissions
+
+**Docker**
+```bash
+docker exec -u 1000 <isvd-container-name> chmod 750 /var/isvd/data/scripts/
+```
+
+**Kubernetes**
+```bash
+kubectl exec <isvd-pod-name> -- chmod 750 /var/isvd/data/scripts/
+```
+
+### 3. Copy the script into the container
+
+**Docker**
+```bash
+docker cp idspgmaint.sh <isvd-target-container-name>:/var/isvd/data/scripts/idspgmaint.sh
+```
+
+**Kubernetes**
+```bash
+kubectl cp idspgmaint.sh <isvd-target-pod-name>:/var/isvd/data/scripts/idspgmaint.sh
+```
+
+---
+
 ## Overview
 
 `idspgmaint.sh` is a controlled, predictable PostgreSQL maintenance script (PG 14–17) for **IBM Security Verify Directory (ISVD)**. It performs `VACUUM`, `VACUUM FULL`, `ANALYZE`, and `REINDEX` operations with:
